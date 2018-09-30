@@ -3,7 +3,44 @@
 #
 FROM node:8-alpine 
 
-LABEL Author="MiGoller, mrproper, pschmitt & moeiscool"
+# Build arguments ...
+# Shinobi's version information
+ARG ARG_APP_VERSION 
+
+# The channel or branch triggering the build.
+ARG ARG_APP_CHANNEL
+
+# The commit sha triggering the build.
+ARG ARG_APP_COMMIT
+
+# Update Shinobi on every container start?
+#   manual:     Update Shinobi manually. New Docker images will always retrieve the latest version.
+#   auto:       Update Shinobi on every container start.
+ARG ARG_APP_UPDATE=manual
+
+# Build data
+ARG ARG_BUILD_DATE
+
+# Basic build-time metadata as defined at http://label-schema.org
+LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
+    org.label-schema.docker.dockerfile="/Dockerfile" \
+    org.label-schema.license="EPL" \
+    org.label-schema.name="MiGoller" \
+    org.label-schema.vendor="MiGoller" \
+    org.label-schema.version=${ARG_APP_VERSION} \
+    org.label-schema.description="Shinobi Pro - The Next Generation in Open-Source Video Management Software" \
+    org.label-schema.url="https://gitlab.com/users/MiGoller/projects" \
+    org.label-schema.vcs-ref=${ARG_APP_COMMIT} \
+    org.label-schema.vcs-type="Git" \
+    org.label-schema.vcs-url="https://gitlab.com/MiGoller/ShinobiDocker.git" \
+    maintainer="MiGoller" \
+    Author="MiGoller, mrproper, pschmitt & moeiscool"
+
+# Persist app-reladted build arguments
+ENV APP_VERSION=$ARG_APP_VERSION \
+    APP_CHANNEL=$ARG_APP_CHANNEL \
+    APP_COMMIT=$ARG_APP_COMMIT \
+    APP_UPDATE=$ARG_APP_UPDATE
 
 # Set environment variables to default values
 # ADMIN_USER : the super user login name
@@ -26,74 +63,77 @@ ENV ADMIN_USER=admin@shinobi.video \
     MYSQL_ROOT_USER=root
 
 
-# Create the custom configuration dir
-RUN mkdir -p /config
+# Create additional directories for: Custom configuration, working directory, database directory, scripts
+RUN mkdir -p \
+        /config \
+        /opt/shinobi \
+        /var/lib/mysql
 
-# Create the working dir
-RUN mkdir -p /opt/shinobi
-
+# Assign working directory
+WORKDIR /opt/shinobi
 
 # Install package dependencies
 RUN apk update && \
-apk upgrade && \
-apk --no-cache add   freetype-dev \ 
-  gnutls-dev \ 
-  lame-dev \ 
-  libass-dev \ 
-  libogg-dev \ 
-  libtheora-dev \ 
-  libvorbis-dev \ 
-  libvpx-dev \ 
-  libwebp-dev \ 
-  libssh2 \ 
-  opus-dev \ 
-  rtmpdump-dev \ 
-  x264-dev \ 
-  x265-dev \ 
-  yasm-dev && \
-apk add --no-cache   --virtual \ 
-  .build-dependencies \ 
-  build-base \ 
-  bzip2 \ 
-  coreutils \ 
-  gnutls \ 
-  nasm \ 
-  tar \ 
-  x264
+    apk add --no-cache \ 
+        freetype-dev \ 
+        gnutls-dev \ 
+        lame-dev \ 
+        libass-dev \ 
+        libogg-dev \ 
+        libtheora-dev \ 
+        libvorbis-dev \ 
+        libvpx-dev \ 
+        libwebp-dev \ 
+        libssh2 \ 
+        opus-dev \ 
+        rtmpdump-dev \ 
+        x264-dev \ 
+        x265-dev \ 
+        yasm-dev && \
+    apk add --no-cache --virtual \ 
+        .build-dependencies \ 
+        build-base \ 
+        bzip2 \ 
+        coreutils \ 
+        gnutls \ 
+        nasm \ 
+        tar \ 
+        x264
 
-RUN apk add --update --no-cache python make ffmpeg pkgconfig git mariadb mariadb-client wget tar xz openrc
-RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+# Install additional packages
+RUN apk update && \
+    apk add --no-cache \
+        ffmpeg \
+        git \
+        make \
+        mariadb-client \
+        openrc \
+        pkgconfig \
+        python \
+        wget \
+        tar \
+        xz
 
 # Install ffmpeg static build version from cdn.shinobi.video
-RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz
+RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
+    tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
+    cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
+    chmod +x /usr/bin/ff* && \
+    rm -f ffmpeg-release-64bit-static.tar.xz && \
+    rm -rf ./ffmpeg-3.3.4-64bit-static
 
-RUN tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ \
-    && cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ \
-    && chmod +x /usr/bin/ff*
-
-RUN rm -f ffmpeg-release-64bit-static.tar.xz \
-    && rm -rf ./ffmpeg-3.3.4-64bit-static
-
-WORKDIR /opt/shinobi
-
-# Clone the Shinobi CCTV PRO repo
-RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi
-
-# Install NodeJS dependencies
-RUN npm i npm@latest -g
-
-RUN npm install pm2 -g
-
-RUN npm install
+# Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
+RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
+    npm i npm@latest -g && \
+    npm install pm2 -g && \
+    npm install
 
 # Copy code
-COPY docker-entrypoint.sh .
-COPY pm2Shinobi.yml .
+COPY docker-entrypoint.sh pm2Shinobi.yml ./
 RUN chmod -f +x ./*.sh
 
 # Copy default configuration files
-COPY ./config/conf.sample.json /opt/shinobi/conf.sample.json
-COPY ./config/super.sample.json /opt/shinobi/super.sample.json
+COPY ./config/conf.sample.json ./config/super.sample.json /opt/shinobi/
 
 VOLUME ["/opt/shinobi/videos"]
 VOLUME ["/config"]

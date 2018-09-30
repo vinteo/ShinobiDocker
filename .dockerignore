@@ -1,8 +1,12 @@
 .git
 .gitignore
+.vscode
 README.md
 Dockerfile
+docker-compose.*
 node_modules
 videos
 dbdata
 datadir
+gitlab
+.gitlab-ci.yml
