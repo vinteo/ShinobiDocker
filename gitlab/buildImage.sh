@@ -41,7 +41,7 @@ echo "- Is default flavor: ${APP_ISDEFAULT}"
 # Any special tags?
 APP_SPECIAL_TAGS="${4}"
 stags=( ${APP_SPECIAL_TAGS//,/ } )
-echo "- Special tags: ${APP_ISDEFAULT}"
+echo "- Special tags: ${APP_SPECIAL_TAGS}"
 
 ### Build tag array
 tags=()

@@ -41,7 +41,7 @@ echo "- Is default flavor: ${APP_ISDEFAULT}"
 # Any special tags?
 APP_SPECIAL_TAGS="${4}"
 stags=( ${APP_SPECIAL_TAGS//,/ } )
-echo "- Special tags: ${APP_ISDEFAULT}"
+echo "- Special tags: ${APP_SPECIAL_TAGS}"
 
 ### Build tag array
 tags=()
@@ -102,7 +102,7 @@ echo "Build, tag and push the images:"
 
 # Login to Docker Hub
 echo "- Logout from GitLab image repository ..."
-docker logout
+docker logout $CI_REGISTRY
 echo "- Login to Docker Hub ..."
 docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
 
