@@ -20,9 +20,9 @@ build-microservice:
   stage: build
   script:
     - apk add --update --no-cache bash
-    - /bin/bash ./gitlab/buildImage.sh "microservice" "" "false" ""
-#    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
-#    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+    - /bin/bash ./gitlab/buildImageDockerHub.sh "microservice" "" "false" ""
+#    - docker build --pull -t "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
+#    - docker push "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
 #  except:
 #    - master
   only:
