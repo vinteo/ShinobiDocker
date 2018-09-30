@@ -46,29 +46,8 @@ echo "- Special tags: ${APP_SPECIAL_TAGS}"
 ### Build tag array
 tags=()
 
-# Add tags for version AND flavor
-if [ -n "${APP_FLAVOR}" ]; then
-    for tag in {"${APP_VERSION}-${APP_FLAVOR}","${version[0]}.${version[1]}-${APP_FLAVOR}","${version[0]}-${APP_FLAVOR}","${APP_FLAVOR}"}; do  
-#        echo " + ${tag}"
-        tags+=( ${tag} )
-    done
-
-    # Any special version?
-    if [ -n "${APP_SPECIAL_VERSIONS}" ]; then
-        for tag in "${sversions[@]}"; do  
-#            echo " + ${tag}-${APP_FLAVOR}"
-            tags+=( ${tag}-${APP_FLAVOR} )
-        done
-    fi
-fi
-
 # Add tags for version for default image type only!
 if [ "${APP_ISDEFAULT}" = "true" ]; then
-    for tag in {"${APP_VERSION}","${version[0]}.${version[1]}","${version[0]}"}; do  
-#        echo " + ${tag}"
-        tags+=( ${tag} )
-    done
-
     # Any special version?
     if [ -n "${APP_SPECIAL_VERSIONS}" ]; then
         for tag in "${sversions[@]}"; do  
@@ -76,11 +55,32 @@ if [ "${APP_ISDEFAULT}" = "true" ]; then
             tags+=( ${tag} )
         done
     fi
+
+    for tag in {"${version[0]}","${version[0]}.${version[1]}","${APP_VERSION}"}; do  
+#        echo " + ${tag}"
+        tags+=( ${tag} )
+    done
 fi
 
 # Add special tags
 if [ -n "${APP_SPECIAL_TAGS}" ]; then
     for tag in "${stags[@]}"; do  
+#        echo " + ${tag}"
+        tags+=( ${tag} )
+    done
+fi
+
+# Add tags for version AND flavor
+if [ -n "${APP_FLAVOR}" ]; then
+        # Any special version?
+    if [ -n "${APP_SPECIAL_VERSIONS}" ]; then
+        for tag in "${sversions[@]}"; do  
+#            echo " + ${tag}-${APP_FLAVOR}"
+            tags+=( ${tag}-${APP_FLAVOR} )
+        done
+    fi
+
+    for tag in {"${APP_FLAVOR}","${version[0]}-${APP_FLAVOR}","${version[0]}.${version[1]}-${APP_FLAVOR}","${APP_VERSION}-${APP_FLAVOR}"}; do  
 #        echo " + ${tag}"
         tags+=( ${tag} )
     done
