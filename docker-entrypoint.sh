@@ -1,10 +1,18 @@
 #!/bin/sh
 set -e
 
+# Update Shinobi to latest version on container start?
+if [ "$APP_UPDATE" = "auto" ]; then
+    echo "Checking for Shinobi updates ..."
+    git reset --hard
+    git pull
+    npm install
+fi
+
 # Copy existing custom configuration files
 echo "Copy custom configuration files ..."
-if [ -d ./config ]; then
-    cp -R -f "./config/"* /opt/shinobi || echo "No custom config files found." 
+if [ -d /config ]; then
+    cp -R -f "/config/"* /opt/shinobi || echo "No custom config files found." 
 fi
 
 # Create default configurations files from samples if not existing
@@ -23,71 +31,113 @@ if [ ! -f /opt/shinobi/plugins/motion/conf.json ]; then
     cp /opt/shinobi/plugins/motion/conf.sample.json /opt/shinobi/plugins/motion/conf.json
 fi
 
-# Hash the admins password
-if [ -n "${ADMIN_PASSWORD}" ]; then
-    echo "Hash admin password ..."
-    ADMIN_PASSWORD_MD5=$(echo -n "${ADMIN_PASSWORD}" | md5sum | sed -e 's/  -$//')
-fi
-echo "MariaDB Directory ..."
-ls /var/lib/mysql
+## Hash the admins password
+#if [ -n "${ADMIN_PASSWORD}" ]; then
+#    echo "Hash admin password ..."
+#    ADMIN_PASSWORD_MD5=$(echo -n "${ADMIN_PASSWORD}" | md5sum | sed -e 's/  -$//')
+#fi
 
-if [ ! -f /var/lib/mysql/ibdata1 ]; then
-    echo "Installing MariaDB ..."
-    mysql_install_db --user=mysql --silent
-fi
-echo "Starting MariaDB ..."
-/usr/bin/mysqld_safe --user=mysql &
-sleep 5s
-
-chown -R mysql /var/lib/mysql
-
-if [ ! -f /var/lib/mysql/ibdata1 ]; then
-    mysql -u root --password="" <<-EOSQL
-SET @@SESSION.SQL_LOG_BIN=0;
-USE mysql;
-DELETE FROM mysql.user ;
-DROP USER IF EXISTS 'root'@'%','root'@'localhost','${DB_USER}'@'localhost','${DB_USER}'@'%';
-CREATE USER 'root'@'%' IDENTIFIED BY '${DB_PASS}' ;
-CREATE USER 'root'@'localhost' IDENTIFIED BY '${DB_PASS}' ;
-CREATE USER '${DB_USER}'@'%' IDENTIFIED BY '${DB_PASS}' ;
-CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}' ;
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION ;
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION ;
-GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'%' WITH GRANT OPTION ;
-GRANT ALL PRIVILEGES ON *.* TO '${DB_USER}'@'localhost' WITH GRANT OPTION ;
-DROP DATABASE IF EXISTS test ;
-FLUSH PRIVILEGES ;
-EOSQL
-fi
-
-# Create MySQL database if it does not exists
+# Create MariaDB database if it does not exists
 if [ -n "${MYSQL_HOST}" ]; then
-    echo "Wait for MySQL server" ...
+    echo -n "Waiting for connection to MariaDB server on $MYSQL_HOST ."
     while ! mysqladmin ping -h"$MYSQL_HOST"; do
         sleep 1
+        echo -n "."
     done
+    echo " established."
 fi
 
+# Create MariaDB database if it does not exists
+if [ -n "${MYSQL_ROOT_USER}" ]; then
+    if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
+        echo "Setting up MariaDB database if it does not exists ..."
 
-echo "Setting up MySQL database if it does not exists ..."
+        mkdir -p sql_temp
+        cp -f ./sql/framework.sql ./sql_temp
+        cp -f ./sql/user.sql ./sql_temp
 
-echo "Create database schema if it does not exists ..."
-mysql -e "source /opt/shinobi/sql/framework.sql" || true
+        if [ -n "${MYSQL_DATABASE}" ]; then
+            echo " - Set database name: ${MYSQL_DATABASE}"
+            sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
+                "./sql_temp/framework.sql"
+            
+            sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
+                "./sql_temp/user.sql"
+        fi
 
-echo "Create database user if it does not exists ..."
-mysql -e "source /opt/shinobi/sql/user.sql" || true
+        if [ -n "${MYSQL_ROOT_USER}" ]; then
+            if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
+                echo "- Modifying user creation script for user: ${MYSQL_USER}"
+                sed -i -e "s/majesticflame/${MYSQL_USER}/g" \
+                    -e "s/\x27\x27/\x27${MYSQL_PASSWORD}\x27/g" \
+                    -e "s/127.0.0.1/%/g" \
+                    "./sql_temp/user.sql"
+            fi
+        fi
 
+        echo "- Create database schema if it does not exists ..."
+        mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/framework.sql" || true
 
-echo "Set keys for CRON and PLUGINS from environment variables ..."
+        echo "- Create database user if it does not exists ..."
+        mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/user.sql" || true
+
+        rm -rf sql_temp
+    fi
+fi
+
+# Update Shinobi's configuration by environment variables
+echo "Updating Shinobi's configuration to match your environment ..."
+
+# Set MariaDB configuration from environment variables
+echo "- Set MariaDB configuration from environment variables ..."
+if [ -n "${MYSQL_USER}" ]; then
+    echo "  - MariaDB username: ${MYSQL_USER}"
+    sed -i -e 's/"user": "majesticflame"/"user": "'"${MYSQL_USER}"'"/g' \
+        "/opt/shinobi/conf.json"
+fi
+
+if [ -n "${MYSQL_PASSWORD}" ]; then
+    echo "  - MariaDB password."
+    sed -i -e 's/"password": ""/"password": "'"${MYSQL_PASSWORD}"'"/g' \
+        "/opt/shinobi/conf.json"
+fi
+
+if [ -n "${MYSQL_HOST}" ]; then
+    echo "  - MariaDB server host: ${MYSQL_HOST}"
+    sed -i -e 's/"host": "127.0.0.1"/"host": "'"${MYSQL_HOST}"'"/g' \
+        "/opt/shinobi/conf.json"
+fi
+
+if [ -n "${MYSQL_DATABASE}" ]; then
+    echo "  - MariaDB database name: ${MYSQL_DATABASE}"
+    sed -i -e 's/"database": "ccio"/"database": "'"${MYSQL_DATABASE}"'"/g' \
+        "/opt/shinobi/conf.json"
+fi
+
+# Set keys for CRON and PLUGINS ...
+echo "- Set keys for CRON and PLUGINS from environment variables ..."
 sed -i -e 's/"key":"73ffd716-16ab-40f4-8c2e-aecbd3bc1d30"/"key":"'"${CRON_KEY}"'"/g' \
        -e 's/"Motion":"d4b5feb4-8f9c-4b91-bfec-277c641fc5e3"/"Motion":"'"${PLUGINKEY_MOTION}"'"/g' \
        -e 's/"OpenCV":"644bb8aa-8066-44b6-955a-073e6a745c74"/"OpenCV":"'"${PLUGINKEY_OPENCV}"'"/g' \
        -e 's/"OpenALPR":"9973e390-f6cd-44a4-86d7-954df863cea0"/"OpenALPR":"'"${PLUGINKEY_OPENALPR}"'"/g' \
        "/opt/shinobi/conf.json"
 
+# Set configuration for motion plugin ...
+echo "Set configuration for motion plugin from environment variables ..."
+sed -i -e 's/"host":"localhost"/"host":"'"${MOTION_HOST}"'"/g' \
+       -e 's/"port":8080/"port":"'"${MOTION_PORT}"'"/g' \
+       -e 's/"key":"d4b5feb4-8f9c-4b91-bfec-277c641fc5e3"/"key":"'"${PLUGINKEY_MOTION}"'"/g' \
+       "/opt/shinobi/plugins/motion/conf.json"
+
 # Set the admin password
 if [ -n "${ADMIN_USER}" ]; then
-    if [ -n "${ADMIN_PASSWORD_MD5}" ]; then
+    if [ -n "${ADMIN_PASSWORD}" ]; then
+        echo "- Set the super admin credentials ..."
+        # Hash the admins password
+        echo "  - Hash super admin password ..."
+        ADMIN_PASSWORD_MD5=$(echo -n "${ADMIN_PASSWORD}" | md5sum | sed -e 's/  -$//')
+        # Set Shinobi's superuser's credentials
+        echo "  - Set credentials ..."
         sed -i -e 's/"mail":"admin@shinobi.video"/"mail":"'"${ADMIN_USER}"'"/g' \
             -e "s/21232f297a57a5a743894a0e4a801fc3/${ADMIN_PASSWORD_MD5}/g" \
             "/opt/shinobi/super.json"
@@ -97,16 +147,17 @@ fi
 # Change the uid/gid of the node user
 if [ -n "${GID}" ]; then
     if [ -n "${UID}" ]; then
+        echo " - Set the uid:gid of the node user to ${UID}:${GID}"
         groupmod -g ${GID} node && usermod -u ${UID} -g ${GID} node
     fi
 fi
 
+# Modify Shinobi configuration
+echo "- Chimp Shinobi's technical configuration ..."
 cd /opt/shinobi
+echo "  - Set cpuUsageMarker ..."
 node tools/modifyConfiguration.js cpuUsageMarker=CPU
-echo "Getting Latest Shinobi Master ..."
-git reset --hard
-git pull
-npm install
+
 # Execute Command
 echo "Starting Shinobi ..."
 exec "$@"
