@@ -67,9 +67,8 @@ if [ -n "${MYSQL_ROOT_USER}" ]; then
 
         if [ -n "${MYSQL_ROOT_USER}" ]; then
             if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
-                echo "- Modifying user creation script for user: ${MYSQL_USER}"
                 sed -i -e "s/majesticflame/${MYSQL_USER}/g" \
-                    -e "s/\x27\x27/\x27${MYSQL_PASSWORD}\x27/g" \
+                    -e "s/''/'${MYSQL_PASSWORD}'/g" \
                     -e "s/127.0.0.1/%/g" \
                     "./sql_temp/user.sql"
             fi
