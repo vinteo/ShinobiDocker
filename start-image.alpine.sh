@@ -14,4 +14,4 @@ then
     chmod -R 777 videos
 fi
 
-docker-compose -f docker-compose.yml up
+docker-compose -f docker-compose-alpine.yml up
