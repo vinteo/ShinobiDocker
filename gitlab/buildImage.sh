@@ -152,19 +152,19 @@ for tag in "${tags[@]}"; do
             IMAGE_TYPE=""
         fi
 
-#        docker build \
-#            --build-arg ARG_APP_VERSION=$APP_VERSION \
-#            --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG \
-#            --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA \
-#            --build-arg ARG_BUILD_DATE="$BUILD_DATE" \
-#            --build-arg ARG_FLAVOR="$IMAGE_TYPE" \
-#            -f "./${APP_DISTRO}/Dockerfile" \
-#            -t "$CI_REGISTRY_IMAGE:${BUILT_TAG}" .
+        docker build \
+            --build-arg ARG_APP_VERSION=$APP_VERSION \
+            --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG \
+            --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA \
+            --build-arg ARG_BUILD_DATE="$BUILD_DATE" \
+            --build-arg ARG_FLAVOR="$IMAGE_TYPE" \
+            -f "./${APP_DISTRO}/Dockerfile" \
+            -t "$CI_REGISTRY_IMAGE:${BUILT_TAG}" .
     else
         # Tag and push image for each tag in list
         echo "- Tagging image:"
         echo "  - $CI_REGISTRY_IMAGE:${tag} ..."
-#        docker tag "$CI_REGISTRY_IMAGE:${BUILT_TAG}" "$CI_REGISTRY_IMAGE:${tag}"
+        docker tag "$CI_REGISTRY_IMAGE:${BUILT_TAG}" "$CI_REGISTRY_IMAGE:${tag}"
     fi
 done
 
@@ -172,7 +172,7 @@ done
 echo "Push image and tags:"
 for tag in "${tags[@]}"; do
     echo "  - $CI_REGISTRY_IMAGE:${tag} ..."
-#    docker push "$CI_REGISTRY_IMAGE:${tag}"
+    docker push "$CI_REGISTRY_IMAGE:${tag}"
 done
 
 echo "-------------------------------------------------------------------------------"

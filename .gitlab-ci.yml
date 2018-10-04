@@ -10,8 +10,8 @@ build-dev-microservice:
   stage: build
   script:
     - apk add --update --no-cache bash
-    - /bin/bash ./gitlab/buildImage.sh "microservice" "git" "" "false" "" "-alpine" "alpine"
-    - /bin/bash ./gitlab/buildImage.sh "microservice" "git" "" "false" "" "" "debian"
+#    - /bin/bash ./gitlab/buildImage.sh "microservice" "git" "" "false" "" "" "alpine"
+    - /bin/bash ./gitlab/buildImage.sh "microservice" "git" "" "false" "" "-debian" "debian"
 #    - docker build --pull -f ./alpine/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine" .
 #    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine"
 #    - docker build --pull -f ./debian/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian" .
