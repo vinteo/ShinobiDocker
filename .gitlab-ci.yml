@@ -9,13 +9,13 @@ before_script:
 build-dev-microservice:
   stage: build
   script:
-    - apk add --update --no-cache bash
-#    - /bin/bash ./gitlab/buildImage.sh "microservice" "git" "" "false" "" "" "alpine"
-    - /bin/bash ./gitlab/buildImage.sh "microservice" "git" "" "false" "" "-debian" "debian"
-#    - docker build --pull -f ./alpine/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine" .
-#    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine"
-#    - docker build --pull -f ./debian/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian" .
-#    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian"
+#    - apk add --update --no-cache bash
+#    - /bin/bash ./gitlab/buildImage.sh "dev-microservice" "git" "" "false" "" "" "alpine"
+#    - /bin/bash ./gitlab/buildImage.sh "dev-microservice" "git" "" "false" "" "-debian" "debian"
+    - docker build --pull -f ./alpine/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine"
+    - docker build --pull -f ./debian/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian"
 #  except:
 #    - master
   only:
@@ -25,7 +25,8 @@ build-microservice:
   stage: build
   script:
     - apk add --update --no-cache bash
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "microservice" "" "false" ""
+    - /bin/bash ./gitlab/buildImageDockerHub.sh "microservice" "git" "" "false" "" "" "alpine"
+    - /bin/bash ./gitlab/buildImageDockerHub.sh "microservice" "git" "" "false" "" "-debian" "debian"
 #    - docker build --pull -t "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
 #    - docker push "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
 #  except:

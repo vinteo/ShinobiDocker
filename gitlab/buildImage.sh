@@ -2,15 +2,7 @@
 
 set -e
 
-#   OLD: buildImageDockerHub.sh "microservice" "" "false" ""
-
-#   buildImageDockerHub.sh      APP_FLAVOR      APP_VERSION APP_SPECIAL_VERSIONS    APP_ISDEFAULT   APP_SPECIAL_TAGS    APP_SUFFIX  APP_DISTRO
-#   NEW: buildImageDockerHub.sh "microservice"  "git"       ""                      "false"         ""                  "alpine"    "alpine"
-
-#   latest, Node 6: ./dummy.sh "" "git" "" "true" "latest" "v6" 6
-#   latest, Node 8: ./dummy.sh "" "git" "" "false" "" "v8" 8
-#   slim, Node 6:   ./dummy.sh "slim" "git" "" "false" "slim" "-v6" 6
-#   slim, Node 8:   ./dummy.sh "slim" "git" "" "false" "" "-v8" 8
+#   buildImage.sh APP_FLAVOR APP_VERSION APP_SPECIAL_VERSIONS APP_ISDEFAULT APP_SPECIAL_TAGS APP_SUFFIX APP_DISTRO
 
 ###############################################################################
 #   Get the app's version information
