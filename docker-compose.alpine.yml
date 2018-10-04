@@ -7,7 +7,9 @@ services:
     volumes:
       - ./datadir:/var/lib/mysql
   shinobi:
-    image: registry.gitlab.com/migoller/shinobidocker:dev-microservice-debian
+    build:
+      context: .
+      dockerfile: ./alpine/Dockerfile
     env_file:
       - MySQL.env
       - Shinobi.env
