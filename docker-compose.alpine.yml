@@ -9,7 +9,7 @@ services:
   shinobi:
     build:
       context: .
-      dockerfile: ./debian/Dockerfile
+      dockerfile: ./alpine/Dockerfile
     env_file:
       - MySQL.env
       - Shinobi.env

@@ -24,7 +24,7 @@ ARG ARG_BUILD_DATE
 # Basic build-time metadata as defined at http://label-schema.org
 LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
     org.label-schema.docker.dockerfile="/Dockerfile" \
-    org.label-schema.license="EPL" \
+    org.label-schema.license="GPLv3" \
     org.label-schema.name="MiGoller" \
     org.label-schema.vendor="MiGoller" \
     org.label-schema.version=${ARG_APP_VERSION} \
