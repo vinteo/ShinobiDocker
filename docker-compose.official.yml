@@ -1,0 +1,15 @@
+version: '2'
+services:
+  shinobi:
+    build:
+      context: .
+      dockerfile: ./official/Dockerfile
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./config:/config
+      - ./videos:/opt/shinobi/videos
+      - ./datadir:/var/lib/mysql
+      - /dev/shm/shinobiDockerTemp:/dev/shm/streams
+    ports:
+      - "8080:8080"

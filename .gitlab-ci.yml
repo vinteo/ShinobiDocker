@@ -10,9 +10,11 @@ build-master:
   stage: build
   script:
     - apk add --update --no-cache bash
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "official" "" "false" "latest"
+    - /bin/bash ./gitlab/buildImageDockerHub.sh "official" "git" "" "false" "latest" "" "official"
 #    - docker build --pull -t "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
 #    - docker push "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+    - /bin/bash ./gitlab/buildImageDockerHub.sh "alpine" "git" "" "false" "" "" "alpine"
+    - /bin/bash ./gitlab/buildImageDockerHub.sh "debian" "git" "" "false" "" "" "debian"
 #  except:
 #    - master
   only:
