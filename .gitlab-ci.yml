@@ -83,7 +83,7 @@ build-microservice-development-debian:
 ##    - docker run $CONTAINER_TEST_IMAGE-debian /script/to/run/tests
 ##    - echo "Testing dev-microservice-debian ..."
 
-release-microservice-development-alpine:
+release-microservice-development-debian:
   stage: release
   script:
     - docker pull $CONTAINER_TEST_IMAGE-debian
