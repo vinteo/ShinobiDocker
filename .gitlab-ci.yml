@@ -45,10 +45,10 @@ release-microservice-development:
   script:
     - echo "Release Alpine-linux microservice Docker image ..."
     - docker pull $CONTAINER_TEST_IMAGE-alpine
-    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-alpine" "$CI_REGISTRY_IMAGE" "microservice" "-$APP_VERSION" "" "false" "" "" "alpine"
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-alpine" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "" "alpine"
     - echo "Release Debian-linux microservice Docker image ..."
     - docker pull $CONTAINER_TEST_IMAGE-debian
-    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-debian" "$CI_REGISTRY_IMAGE" "microservice" "-$APP_VERSION" "" "false" "" "-debian" "debian"
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-debian" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "-debian" "debian"
   only:
     - dev-microservice
     - /^issue-microservice-.*$/
