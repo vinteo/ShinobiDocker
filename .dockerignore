@@ -9,4 +9,5 @@ videos
 dbdata
 datadir
 gitlab
+GitLabImages
 .gitlab-ci.yml

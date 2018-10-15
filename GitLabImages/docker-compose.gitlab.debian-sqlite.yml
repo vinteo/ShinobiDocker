@@ -1,0 +1,16 @@
+version: '2'
+services:
+  shinobi:
+    image: registry.gitlab.com/migoller/shinobidocker:dev-microservice-debian
+    env_file:
+      - SQLite.env
+      - Shinobi.env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./config:/config
+      - ./videos:/opt/shinobi/videos
+      - ./sqlitedata:/opt/dbdata
+      - /dev/shm/shinobiDockerTemp:/dev/shm/streams
+    ports:
+      - "8080:8080"
