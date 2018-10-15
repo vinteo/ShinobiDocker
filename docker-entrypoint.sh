@@ -37,80 +37,97 @@ fi
 #    ADMIN_PASSWORD_MD5=$(echo -n "${ADMIN_PASSWORD}" | md5sum | sed -e 's/  -$//')
 #fi
 
-# Create MariaDB database if it does not exists
-if [ -n "${MYSQL_HOST}" ]; then
-    echo -n "Waiting for connection to MariaDB server on $MYSQL_HOST ."
-    while ! mysqladmin ping -h"$MYSQL_HOST"; do
-        sleep 1
-        echo -n "."
-    done
-    echo " established."
-fi
+# Use embedded SQLite3 database ?
+if [ "${EMBEDDEDDB}" = "true" ] || [ "${EMBEDDEDDB}" = "TRUE" ]; then
+    # Create SQLite3 database if it does not exists
+    chmod -R 777 /opt/dbdata
 
-# Create MariaDB database if it does not exists
-if [ -n "${MYSQL_ROOT_USER}" ]; then
-    if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
-        echo "Setting up MariaDB database if it does not exists ..."
+    if [ ! -e "/opt/dbdata/shinobi.sqlite" ]; then
+        echo "Creating shinobi.sqlite for SQLite3..."
+        cp /opt/shinobi/sql/shinobi.sample.sqlite /opt/dbdata/shinobi.sqlite
+    fi
+else
+    # Create MariaDB database if it does not exists
+    if [ -n "${MYSQL_HOST}" ]; then
+        echo -n "Waiting for connection to MariaDB server on $MYSQL_HOST ."
+        while ! mysqladmin ping -h"$MYSQL_HOST"; do
+            sleep 1
+            echo -n "."
+        done
+        echo " established."
+    fi
 
-        mkdir -p sql_temp
-        cp -f ./sql/framework.sql ./sql_temp
-        cp -f ./sql/user.sql ./sql_temp
+    # Create MariaDB database if it does not exists
+    if [ -n "${MYSQL_ROOT_USER}" ]; then
+        if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
+            echo "Setting up MariaDB database if it does not exists ..."
 
-        if [ -n "${MYSQL_DATABASE}" ]; then
-            echo " - Set database name: ${MYSQL_DATABASE}"
-            sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
-                "./sql_temp/framework.sql"
-            
-            sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
-                "./sql_temp/user.sql"
-        fi
+            mkdir -p sql_temp
+            cp -f ./sql/framework.sql ./sql_temp
+            cp -f ./sql/user.sql ./sql_temp
 
-        if [ -n "${MYSQL_ROOT_USER}" ]; then
-            if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
-                sed -i -e "s/majesticflame/${MYSQL_USER}/g" \
-                    -e "s/''/'${MYSQL_PASSWORD}'/g" \
-                    -e "s/127.0.0.1/%/g" \
+            if [ -n "${MYSQL_DATABASE}" ]; then
+                echo " - Set database name: ${MYSQL_DATABASE}"
+                sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
+                    "./sql_temp/framework.sql"
+                
+                sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
                     "./sql_temp/user.sql"
             fi
+
+            if [ -n "${MYSQL_ROOT_USER}" ]; then
+                if [ -n "${MYSQL_ROOT_PASSWORD}" ]; then
+                    sed -i -e "s/majesticflame/${MYSQL_USER}/g" \
+                        -e "s/''/'${MYSQL_PASSWORD}'/g" \
+                        -e "s/127.0.0.1/%/g" \
+                        "./sql_temp/user.sql"
+                fi
+            fi
+
+            echo "- Create database schema if it does not exists ..."
+            mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/framework.sql" || true
+
+            echo "- Create database user if it does not exists ..."
+            mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/user.sql" || true
+
+            rm -rf sql_temp
         fi
-
-        echo "- Create database schema if it does not exists ..."
-        mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/framework.sql" || true
-
-        echo "- Create database user if it does not exists ..."
-        mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/user.sql" || true
-
-        rm -rf sql_temp
     fi
 fi
 
 # Update Shinobi's configuration by environment variables
 echo "Updating Shinobi's configuration to match your environment ..."
 
-# Set MariaDB configuration from environment variables
-echo "- Set MariaDB configuration from environment variables ..."
-if [ -n "${MYSQL_USER}" ]; then
-    echo "  - MariaDB username: ${MYSQL_USER}"
-    sed -i -e 's/"user": "majesticflame"/"user": "'"${MYSQL_USER}"'"/g' \
-        "/opt/shinobi/conf.json"
-fi
+if [ "${EMBEDDEDDB}" = "true" ] || [ "${EMBEDDEDDB}" = "TRUE" ]; then
+    # Set database to SQLite3
+    echo "Set database type to SQLite3 ..."
+    node /opt/shinobi/tools/modifyConfiguration.js databaseType=sqlite3 db='{"filename":"/opt/dbdata/shinobi.sqlite"}'
+else
+    # Set MariaDB configuration from environment variables
+    echo "- Set MariaDB configuration from environment variables ..."
+    if [ -n "${MYSQL_USER}" ]; then
+        echo "  - MariaDB username: ${MYSQL_USER}"
+        sed -i -e 's/"user": "majesticflame"/"user": "'"${MYSQL_USER}"'"/g' \
+            "/opt/shinobi/conf.json"
+    fi
 
-if [ -n "${MYSQL_PASSWORD}" ]; then
-    echo "  - MariaDB password."
-    sed -i -e 's/"password": ""/"password": "'"${MYSQL_PASSWORD}"'"/g' \
-        "/opt/shinobi/conf.json"
-fi
+    if [ -n "${MYSQL_PASSWORD}" ]; then
+        echo "  - MariaDB password."
+        sed -i -e 's/"password": ""/"password": "'"${MYSQL_PASSWORD}"'"/g' \
+            "/opt/shinobi/conf.json"
+    fi
 
-if [ -n "${MYSQL_HOST}" ]; then
-    echo "  - MariaDB server host: ${MYSQL_HOST}"
-    sed -i -e 's/"host": "127.0.0.1"/"host": "'"${MYSQL_HOST}"'"/g' \
-        "/opt/shinobi/conf.json"
-fi
+    if [ -n "${MYSQL_HOST}" ]; then
+        echo "  - MariaDB server host: ${MYSQL_HOST}"
+        sed -i -e 's/"host": "127.0.0.1"/"host": "'"${MYSQL_HOST}"'"/g' \
+            "/opt/shinobi/conf.json"
+    fi
 
-if [ -n "${MYSQL_DATABASE}" ]; then
-    echo "  - MariaDB database name: ${MYSQL_DATABASE}"
-    sed -i -e 's/"database": "ccio"/"database": "'"${MYSQL_DATABASE}"'"/g' \
-        "/opt/shinobi/conf.json"
+    if [ -n "${MYSQL_DATABASE}" ]; then
+        echo "  - MariaDB database name: ${MYSQL_DATABASE}"
+        sed -i -e 's/"database": "ccio"/"database": "'"${MYSQL_DATABASE}"'"/g' \
+            "/opt/shinobi/conf.json"
+    fi
 fi
 
 # Set keys for CRON and PLUGINS ...

@@ -34,6 +34,7 @@ It doesn't makes sense to reinvent the wheel while there are so many specialized
 - The corresponding container is stateless. Any data will be stored outside the container by using volumes or volume mounts.
 - The image allows to connect to a MariaDB server within the same stack running `docker-compose` or to link to an already existing MariaDB server.
 - Alpine-based images and Debian-based images available. Get rid of the DNS-resolution issues by switching from the Alpine-based image to the Debian-based image!
+- The microservice images will support SQLite databases as well. Have a look at the repository on how to configure SQLite or wait for documentation.
 
 ## How to Dock Shinobi
 Now you have at least two additional options to dock Shinobi.

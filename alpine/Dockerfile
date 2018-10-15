@@ -67,7 +67,8 @@ ENV ADMIN_USER=admin@shinobi.video \
 RUN mkdir -p \
         /config \
         /opt/shinobi \
-        /var/lib/mysql
+        /var/lib/mysql \
+        /opt/dbdata
 
 # Assign working directory
 WORKDIR /opt/shinobi
@@ -110,6 +111,9 @@ RUN apk update && \
         openrc \
         pkgconfig \
         python \
+        socat \
+        sqlite \
+        sqlite-dev \
         wget \
         tar \
         xz
@@ -126,7 +130,11 @@ RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz
 RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
     npm i npm@latest -g && \
     npm install pm2 -g && \
-    npm install
+    npm install jsonfile && \
+    npm install sqlite3 && \
+    npm install --unsafe-perm && \
+    npm audit fix --force
+
 
 # Copy code
 COPY docker-entrypoint.sh pm2Shinobi.yml ./
@@ -138,6 +146,7 @@ COPY ./config/conf.sample.json ./config/super.sample.json /opt/shinobi/
 VOLUME ["/opt/shinobi/videos"]
 VOLUME ["/config"]
 VOLUME ["/var/lib/mysql"]
+VOLUME ["/opt/dbdata"]
 
 EXPOSE 8080
 

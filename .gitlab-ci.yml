@@ -3,43 +3,71 @@ image: docker:latest
 services:
   - docker:dind
 
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+stages:
+  - build
+  - test
+  - release
+  - deploy
 
-build-dev-microservice:
-  stage: build
-  script:
-#    - apk add --update --no-cache bash
-#    - /bin/bash ./gitlab/buildImage.sh "dev-microservice" "git" "" "false" "" "" "alpine"
-#    - /bin/bash ./gitlab/buildImage.sh "dev-microservice" "git" "" "false" "" "-debian" "debian"
-    - docker build --pull -f ./alpine/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine" .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-alpine"
-    - docker build --pull -f ./debian/Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian" .
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-debian"
-#  except:
-#    - master
-  only:
-    - dev-microservice
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-test
+  CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+before_script:
+#  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - apk add --update --no-cache bash nodejs
+  - export BUILD_DATE=$(date +"%Y.%m.%d %H:%M:%S")
+  - wget -q https://gitlab.com/Shinobi-Systems/Shinobi/raw/master/package.json -O ./package.json
+  - export APP_VERSION=$( node -pe "require('./package.json')['version']" )
+  - wget -q https://gitlab.com/MiGoller/docker-tag-creator-script/-/jobs/artifacts/master/raw/createTagList.sh?job=deploy-artifacts-master -O ./createTagList.sh
+  - wget -q https://gitlab.com/MiGoller/docker-tag-creator-script/-/jobs/artifacts/master/raw/releaseDockerImage.sh?job=deploy-artifacts-master -O ./releaseDockerImage.sh
+  - chmod +x *.sh  
 
 build-microservice:
   stage: build
   script:
-    - apk add --update --no-cache bash
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "microservice" "git" "" "false" "" "" "alpine"
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "microservice" "git" "" "false" "" "-debian" "debian"
-#    - docker build --pull -t "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
-#    - docker push "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-#  except:
-#    - master
+    - echo "Build Alpine-linux microservice Docker image ..."
+    - docker build --pull -f ./alpine/Dockerfile -t $CONTAINER_TEST_IMAGE-alpine --build-arg ARG_APP_VERSION=$APP_VERSION --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA --build-arg ARG_BUILD_DATE="$BUILD_DATE" --build-arg ARG_FLAVOR="alpine" .
+    - docker push $CONTAINER_TEST_IMAGE-alpine
+    - echo "Build Debian-linux microservice Docker image ..."
+    - docker build --pull -f ./debian/Dockerfile -t $CONTAINER_TEST_IMAGE-debian --build-arg ARG_APP_VERSION=$APP_VERSION --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA --build-arg ARG_BUILD_DATE="$BUILD_DATE" --build-arg ARG_FLAVOR="debian" .
+    - docker push $CONTAINER_TEST_IMAGE-debian
   only:
     - microservice
+    - dev-microservice
+    - /^issue-microservice-.*$/
 
-build-issues:
-  stage: build
+release-microservice-development:
+  stage: release
   script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
-#    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-#  except:
-#    - master
+    - echo "Release Alpine-linux microservice Docker image ..."
+    - docker pull $CONTAINER_TEST_IMAGE-alpine
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-alpine" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "" "alpine"
+    - echo "Release Debian-linux microservice Docker image ..."
+    - docker pull $CONTAINER_TEST_IMAGE-debian
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-debian" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "-debian" "debian"
   only:
-    - issue-*
+    - dev-microservice
+    - /^issue-microservice-.*$/
+
+release-microservice-production:
+  stage: release
+  script:
+    - echo "Releasing microservice Docker images ..."
+    - echo " - Pull Alpine-linux microservice Docker image ..."
+    - docker pull $CONTAINER_TEST_IMAGE-alpine
+    - echo " - Pull Debian-linux microservice Docker image ..."
+    - docker pull $CONTAINER_TEST_IMAGE-debian
+    - echo " - Logout from GitLab image repository ..."
+    - docker logout $CI_REGISTRY
+    - echo " - Login to Docker Hub ..."
+    - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
+    - echo "Release Alpine-linux microservice Docker image ..."
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-alpine" "$DH_REGISTRY_IMAGE" "microservice" "$APP_VERSION" "" "false" "" "" "alpine"
+    - echo "Release Debian-linux microservice Docker image ..."
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-debian" "$DH_REGISTRY_IMAGE" "microservice" "$APP_VERSION" "" "false" "" "-debian" "debian"
+  only:
+    - microservice
