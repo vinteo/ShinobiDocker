@@ -13,6 +13,7 @@ export APP_VERSION=$( node -pe "require('./ShinobiPro/package.json')['version']"
 # Get ffmpeg
 wget -q https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz -O ./ffmpeg-release-64bit-static.tar.xz
 tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./
+mkdir -p ./ffmpeg
 cp -f ./ffmpeg-3.3.4-64bit-static/ff* ./ffmpeg
 chmod +x ./ffmpeg
 rm -f ffmpeg-release-64bit-static.tar.xz
