@@ -18,17 +18,13 @@ variables:
 before_script:
 #  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  - apk add --update --no-cache bash nodejs
+  - apk add --update --no-cache bash
   - export BUILD_DATE=$(date +"%Y.%m.%d %H:%M:%S")
-  - wget -q https://gitlab.com/Shinobi-Systems/Shinobi/raw/master/package.json -O ./package.json
-  - export APP_VERSION=$( node -pe "require('./package.json')['version']" )
-  - wget -q https://gitlab.com/MiGoller/docker-tag-creator-script/-/jobs/artifacts/master/raw/createTagList.sh?job=deploy-artifacts-master -O ./createTagList.sh
-  - wget -q https://gitlab.com/MiGoller/docker-tag-creator-script/-/jobs/artifacts/master/raw/releaseDockerImage.sh?job=deploy-artifacts-master -O ./releaseDockerImage.sh
-  - chmod +x *.sh  
 
 build-microservice:
   stage: build
   script:
+    - /bin/bash ./hooks/preBuildHook.sh
     - echo "Build Alpine-linux microservice Docker image ..."
     - docker build --pull -f ./alpine/Dockerfile -t $CONTAINER_TEST_IMAGE-alpine --build-arg ARG_APP_VERSION=$APP_VERSION --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA --build-arg ARG_BUILD_DATE="$BUILD_DATE" --build-arg ARG_FLAVOR="alpine" .
     - docker push $CONTAINER_TEST_IMAGE-alpine
@@ -43,6 +39,7 @@ build-microservice:
 release-microservice-development:
   stage: release
   script:
+    - /bin/bash ./hooks/preReleaseHook.sh
     - echo "Release Alpine-linux microservice Docker image ..."
     - docker pull $CONTAINER_TEST_IMAGE-alpine
     - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-alpine" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "" "alpine"

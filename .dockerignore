@@ -11,3 +11,4 @@ datadir
 gitlab
 GitLabImages
 .gitlab-ci.yml
+conf.json

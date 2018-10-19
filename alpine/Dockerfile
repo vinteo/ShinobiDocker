@@ -132,16 +132,18 @@ RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
     npm install pm2 -g && \
     npm install jsonfile && \
     npm install sqlite3 && \
+    npm install edit-json-file && \
     npm install --unsafe-perm && \
     npm audit fix --force
 
 
 # Copy code
 COPY docker-entrypoint.sh pm2Shinobi.yml ./
+COPY /tools/modifyJson.js ./tools
 RUN chmod -f +x ./*.sh
 
 # Copy default configuration files
-COPY ./config/conf.sample.json ./config/super.sample.json /opt/shinobi/
+#COPY ./config/conf.sample.json ./config/super.sample.json /opt/shinobi/
 
 VOLUME ["/opt/shinobi/videos"]
 VOLUME ["/config"]

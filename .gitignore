@@ -1,2 +1,7 @@
 .vscode
 dummy*.sh
+node_modules
+package-lock.json
+conf.json
+ShinobiPro
+ffmpeg
