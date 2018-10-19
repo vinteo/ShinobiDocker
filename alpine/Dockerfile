@@ -119,12 +119,13 @@ RUN apk update && \
         xz
 
 # Install ffmpeg static build version from cdn.shinobi.video
-RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
-    tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
-    cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
-    chmod +x /usr/bin/ff* && \
-    rm -f ffmpeg-release-64bit-static.tar.xz && \
-    rm -rf ./ffmpeg-3.3.4-64bit-static
+#RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
+#    tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
+#    cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
+#    chmod +x /usr/bin/ff* && \
+#    rm -f ffmpeg-release-64bit-static.tar.xz && \
+#    rm -rf ./ffmpeg-3.3.4-64bit-static
+COPY /ffmpeg/* /usr/bin/
 
 # Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
 RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
@@ -135,7 +136,11 @@ RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
     npm install edit-json-file && \
     npm install --unsafe-perm && \
     npm audit fix --force
-
+#COPY /ShinobiPro/* ./
+#RUN npm i npm@latest pm2 -g && \
+#    npm install jsonfile sqlite3 edit-json-file
+#RUN npm install --unsafe-perm && \
+#    npm audit fix --force
 
 # Copy code
 COPY docker-entrypoint.sh pm2Shinobi.yml ./

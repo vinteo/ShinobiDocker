@@ -2,7 +2,8 @@
 
 set -e
 
-apk add --update --no-cache nodejs git tar
+apk add --update --no-cache nodejs git tar xz
+
 # Clone the Shinobi Pro repositiory
 git clone https://gitlab.com/Shinobi-Systems/Shinobi.git ./ShinobiPro
 
