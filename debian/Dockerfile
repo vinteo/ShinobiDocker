@@ -77,7 +77,7 @@ RUN mkdir -p \
 # Assign working directory
 WORKDIR /opt/shinobi
 
-RUN echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
+RUN echo "deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
 
 # Install package dependencies
 RUN apt-get update && \
