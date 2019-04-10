@@ -37,7 +37,7 @@ then
 fi
 
 if [ -z ${1+x} ]; then
-    echo "Usage: ./run-image.sh [official|alpine|debian]"
+    echo "Usage: ./run-image.sh [official|alpine|debian|arch]"
 else
     docker-compose -f ./docker-compose.${1}.yml up --build
 fi

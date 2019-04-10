@@ -59,6 +59,7 @@ else
             mkdir -p sql_temp
             cp -f ./sql/framework.sql ./sql_temp
             cp -f ./sql/user.sql ./sql_temp
+            cp -f ./sql/FixLdapAuth.sql ./sql_temp
 
             if [ -n "${MYSQL_DATABASE}" ]; then
                 echo " - Set database name: ${MYSQL_DATABASE}"
@@ -67,6 +68,9 @@ else
                 
                 sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
                     "./sql_temp/user.sql"
+
+                sed -i  -e "s/ccio/${MYSQL_DATABASE}/g" \
+                    "./sql_temp/FixLdapAuth.sql"
             fi
 
             if [ -n "${MYSQL_ROOT_USER}" ]; then
@@ -80,6 +84,9 @@ else
 
             echo "- Create database schema if it does not exists ..."
             mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/framework.sql" || true
+
+            echo "- Fix user table for LDAP auth issues ..."
+            mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/FixLdapAuth.sql" || true
 
             echo "- Create database user if it does not exists ..."
             mysql -u $MYSQL_ROOT_USER -p$MYSQL_ROOT_PASSWORD -h $MYSQL_HOST -e "source ./sql_temp/user.sql" || true

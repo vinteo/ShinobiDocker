@@ -18,7 +18,7 @@ variables:
 before_script:
 #  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-  - apk add --update --no-cache bash
+  - apk add --update --no-cache bash coreutils gawk grep
   - export BUILD_DATE=$(date +"%Y.%m.%d %H:%M:%S")
 
 build-microservice:
@@ -31,6 +31,9 @@ build-microservice:
     - echo "Build Debian-linux microservice Docker image ..."
     - docker build --pull -f ./debian/Dockerfile -t $CONTAINER_TEST_IMAGE-debian --build-arg ARG_APP_VERSION=$APP_VERSION --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA --build-arg ARG_BUILD_DATE="$BUILD_DATE" --build-arg ARG_FLAVOR="debian" .
     - docker push $CONTAINER_TEST_IMAGE-debian
+    - echo "Build archlinux microservice Docker image ..."
+    - docker build --pull -f ./arch/Dockerfile -t $CONTAINER_TEST_IMAGE-arch --build-arg ARG_APP_VERSION=$APP_VERSION --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA --build-arg ARG_BUILD_DATE="$BUILD_DATE" --build-arg ARG_FLAVOR="arch" .
+    - docker push $CONTAINER_TEST_IMAGE-arch
   only:
     - microservice
     - dev-microservice
@@ -46,6 +49,9 @@ release-microservice-development:
     - echo "Release Debian-linux microservice Docker image ..."
     - docker pull $CONTAINER_TEST_IMAGE-debian
     - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-debian" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "-debian" "debian"
+    - echo "Release archlinux microservice Docker image ..."
+    - docker pull $CONTAINER_TEST_IMAGE-arch
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-arch" "$CI_REGISTRY_IMAGE" "$CI_COMMIT_REF_SLUG" "-$APP_VERSION" "" "false" "" "-arch" "arch"
   only:
     - dev-microservice
     - /^issue-microservice-.*$/
@@ -58,6 +64,8 @@ release-microservice-production:
     - docker pull $CONTAINER_TEST_IMAGE-alpine
     - echo " - Pull Debian-linux microservice Docker image ..."
     - docker pull $CONTAINER_TEST_IMAGE-debian
+    - echo " - Pull archlinux microservice Docker image ..."
+    - docker pull $CONTAINER_TEST_IMAGE-arch
     - echo " - Logout from GitLab image repository ..."
     - docker logout $CI_REGISTRY
     - echo " - Login to Docker Hub ..."
@@ -66,5 +74,7 @@ release-microservice-production:
     - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-alpine" "$DH_REGISTRY_IMAGE" "microservice" "$APP_VERSION" "" "false" "" "" "alpine"
     - echo "Release Debian-linux microservice Docker image ..."
     - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-debian" "$DH_REGISTRY_IMAGE" "microservice" "$APP_VERSION" "" "false" "" "-debian" "debian"
+    - echo "Release archlinux microservice Docker image ..."
+    - /bin/bash ./releaseDockerImage.sh "$CONTAINER_TEST_IMAGE-arch" "$DH_REGISTRY_IMAGE" "microservice" "$APP_VERSION" "" "false" "" "-arch" "arch"
   only:
     - microservice

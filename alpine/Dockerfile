@@ -21,6 +21,9 @@ ARG ARG_APP_UPDATE=manual
 # Build data
 ARG ARG_BUILD_DATE
 
+# ShinobiPro branch, defaults to master
+ARG ARG_APP_BRANCH=master
+
 # Basic build-time metadata as defined at http://label-schema.org
 LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
     org.label-schema.docker.dockerfile="/Dockerfile" \
@@ -40,7 +43,8 @@ LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
 ENV APP_VERSION=$ARG_APP_VERSION \
     APP_CHANNEL=$ARG_APP_CHANNEL \
     APP_COMMIT=$ARG_APP_COMMIT \
-    APP_UPDATE=$ARG_APP_UPDATE
+    APP_UPDATE=$ARG_APP_UPDATE \
+    APP_BRANCH=${ARG_APP_BRANCH}
 
 # Set environment variables to default values
 # ADMIN_USER : the super user login name
@@ -104,6 +108,7 @@ RUN apk update && \
 # Install additional packages
 RUN apk update && \
     apk add --no-cache \
+        bind-tools \
         ffmpeg \
         git \
         make \
@@ -119,41 +124,32 @@ RUN apk update && \
         xz
 
 # Install ffmpeg static build version from cdn.shinobi.video
-#RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
-#    tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
-#    cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
-#    chmod +x /usr/bin/ff* && \
-#    rm -f ffmpeg-release-64bit-static.tar.xz && \
-#    rm -rf ./ffmpeg-3.3.4-64bit-static
-COPY /ffmpeg/* /usr/bin/
+RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
+   tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
+   cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
+   chmod +x /usr/bin/ff* && \
+   rm -f ffmpeg-release-64bit-static.tar.xz && \
+   rm -rf ./ffmpeg-3.3.4-64bit-static
+# COPY /ffmpeg/* /usr/bin/
 
 # Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
-RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
+RUN git clone -b ${ARG_APP_BRANCH} https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
     npm i npm@latest -g && \
     npm install pm2 -g && \
     npm install jsonfile && \
     npm install sqlite3 && \
     npm install edit-json-file && \
+    npm install ffbinaries && \
     npm install --unsafe-perm && \
     npm audit fix --force
-#COPY /ShinobiPro/* ./
-#RUN npm i npm@latest pm2 -g && \
-#    npm install jsonfile sqlite3 edit-json-file
-#RUN npm install --unsafe-perm && \
-#    npm audit fix --force
 
 # Copy code
 COPY docker-entrypoint.sh pm2Shinobi.yml ./
 COPY /tools/modifyJson.js ./tools
 RUN chmod -f +x ./*.sh
 
-# Copy default configuration files
-#COPY ./config/conf.sample.json ./config/super.sample.json /opt/shinobi/
-
 VOLUME ["/opt/shinobi/videos"]
 VOLUME ["/config"]
-VOLUME ["/var/lib/mysql"]
-VOLUME ["/opt/dbdata"]
 
 EXPOSE 8080
 
