@@ -85,7 +85,7 @@ else
                 # ./releaseDockerImage.sh "$SOURCE_IMAGE_NAME" "$DEST_IMAGE_NAME" "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO"
                 ./releaseDockerImage.sh \
                     "${CONTAINER_TEST_IMAGE}-${branch}_${image}" "${NEW_DEST_IMAGE_NAME}" \
-                    "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO""
+                    "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO"
             fi
         done
     done
