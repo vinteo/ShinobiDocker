@@ -56,3 +56,20 @@ release-official-release:
     - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
   only:
     - release-official
+
+release-master:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - echo " - Pulling images ..."
+    - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
+    - echo " - Logout from GitLab image repository ..."
+    - docker logout $CI_REGISTRY
+    - echo " - Login to Docker Hub ..."
+    - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
+    - echo "Releasing alpine and debian images ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
+    - echo "Releasing official image ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$DH_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    - master
