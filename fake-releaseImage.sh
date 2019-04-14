@@ -18,7 +18,7 @@ echo "----  DEV-images  ----"
 # Offical image with tags "latest" and "official"
 /bin/bash ./gitlab-ci/releaseImage.sh \
     "dev" "official" "testimagename" \
-    "" "-" "" "false" "latest"  ""
+    "" "-" "" "false" "latest-dev"  ""
 
 echo "----  MASTER-images  ----"
 # alpine and debian images
@@ -30,4 +30,8 @@ echo "----  MASTER-images  ----"
 #   The official image does not contain any version information!
 /bin/bash ./gitlab-ci/releaseImage.sh \
     "dev" "official" "testimagename" \
+    "" "-" "" "false" "latest-dev"  ""
+
+/bin/bash ./gitlab-ci/releaseImage.sh \
+    "master" "official" "testimagename" \
     "" "-" "" "false" "latest"  ""
