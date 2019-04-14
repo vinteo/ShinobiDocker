@@ -25,7 +25,7 @@ build-official:
   script:
     - /bin/bash ./gitlab-ci/buildImage.sh "master,dev" "official,alpine,debian"
   only:
-    - develop
+    - release-official
     - master
 
 build-feature-official:
@@ -35,18 +35,6 @@ build-feature-official:
   only:
     - feature-offical
     - /^feature-official.*$/
-
-release-official-develop:
-  stage: release
-  script:
-    - /bin/bash ./gitlab-ci/preReleaseHook.sh
-    - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
-  only:
-    - develop
-  except:
-    - master
 
 release-feature-official:
   stage: release
@@ -58,3 +46,13 @@ release-feature-official:
   only:
     - feature-offical
     - /^feature-official.*$/
+
+release-official-release:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    - release-official

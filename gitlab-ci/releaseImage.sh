@@ -73,12 +73,7 @@ else
 
             # Tag and push the image
             if [ "${FAKE_CI}" = "true" ]; then
-                # ./createTagList.sh "${branch}" "$APP_VERSION" "" "false" "" "" "${image}"
-                # ./createTagList.sh "${branch}-${image}" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "${image}"
-                # ./createTagList.sh "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO"
-                
                 $( ./createTagList.sh "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO" )
-
                 echo "    - Image name: ${NEW_DEST_IMAGE_NAME}:[${TAG_LIST}]"
             else
                 # echo "    - 1"

@@ -120,23 +120,9 @@ RUN apk update && \
 
 RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
-# # Install ffmpeg static build version from cdn.shinobi.video
-# RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
-#     tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
-#     cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
-#     chmod +x /usr/bin/ff* && \
-#     rm -f ffmpeg-release-64bit-static.tar.xz && \
-#     rm -rf ./ffmpeg-3.3.4-64bit-static
-
-# # Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
-# RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
-#     npm i npm@latest -g && \
-#     npm install pm2 -g && \
-#     npm install
-
 # Install Shinobi app including NodeJS dependencies
 COPY ./ShinobiPro/ ./
-# RUN ls -al
+
 RUN npm i npm@latest -g && \
     npm install pm2 -g && \
     npm install jsonfile && \

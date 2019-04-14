@@ -11,10 +11,10 @@ export FAKE_CI=true
 
 # Official images: alpine and debian
 /bin/bash ./gitlab-ci/releaseImage.sh \
-    "master,dev" "alpine,debian" "testimagename" \
+    "dev" "alpine,debian" "testimagename" \
     "" "-" "" "false" ""  ""
 
 # Offical image with tags "latest" and "official"
 /bin/bash ./gitlab-ci/releaseImage.sh \
-    "master,dev" "official" "testimagename" \
+    "dev" "official" "testimagename" \
     "" "-" "" "false" "latest"  ""
