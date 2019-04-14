@@ -14,11 +14,11 @@ else
         echo "Pulling image(s) for branch ${branch}:"
         for image in "${images[@]}"; do
             # Pull image for tagging, etc.
-            echo "  - Pulling ${CONTAINER_TEST_IMAGE}-${branch}:${image} ..."
+            echo "  - Pulling ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
             if [ "${FAKE_CI}" = "true" ]; then
-                echo "    fake --> docker pull ${CONTAINER_TEST_IMAGE}-${branch}:${image} ..."
+                echo "    fake --> docker pull ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
             else
-                docker pull ${CONTAINER_TEST_IMAGE}-${branch}:${image}
+                docker pull ${CONTAINER_TEST_IMAGE}-${branch}_${image}
             fi
         done
     done
