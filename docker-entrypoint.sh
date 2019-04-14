@@ -3,8 +3,10 @@ set -e
 
 # Copy existing custom configuration files
 echo "Copy custom configuration files ..."
-if [ -d ./config ]; then
-    cp -R -f "./config/"* /opt/shinobi || echo "No custom config files found." 
+if [ -d /config ]; then
+    cp -R -f "/config/"* /opt/shinobi || echo "No custom config files found." 
+else
+    echo "Folder /config doesn't exist - not copying custom config files" 
 fi
 
 # Create default configurations files from samples if not existing
@@ -33,7 +35,7 @@ ls /var/lib/mysql
 
 if [ ! -f /var/lib/mysql/ibdata1 ]; then
     echo "Installing MariaDB ..."
-    mysql_install_db --user=mysql --silent
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql --silent
 fi
 echo "Starting MariaDB ..."
 /usr/bin/mysqld_safe --user=mysql &

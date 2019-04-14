@@ -1,9 +1,10 @@
 version: '2'
 services:
   shinobi:
-    build:
-      context: .
-      dockerfile: ./official/Dockerfile
+    image: shinobidocker-dev:alpine
+    # build:
+      # context: .
+      # dockerfile: ./official/Dockerfile
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro

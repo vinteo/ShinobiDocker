@@ -21,13 +21,16 @@ ARG ARG_APP_UPDATE=auto
 # Build data
 ARG ARG_BUILD_DATE
 
+# ShinobiPro branch, defaults to master
+ARG ARG_APP_BRANCH=master
+
 # Basic build-time metadata as defined at http://label-schema.org
 LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
     org.label-schema.docker.dockerfile="/Dockerfile" \
     org.label-schema.license="GPLv3" \
     org.label-schema.name="MiGoller" \
     org.label-schema.vendor="MiGoller" \
-    org.label-schema.version=${ARG_APP_VERSION} \
+    org.label-schema.version="${ARG_APP_VERSION}-${ARG_APP_BRANCH}" \
     org.label-schema.description="Shinobi Pro - The Next Generation in Open-Source Video Management Software" \
     org.label-schema.url="https://gitlab.com/users/MiGoller/projects" \
     org.label-schema.vcs-ref=${ARG_APP_COMMIT} \
@@ -40,7 +43,8 @@ LABEL org.label-schema.build-date=${ARG_BUILD_DATE} \
 ENV APP_VERSION=$ARG_APP_VERSION \
     APP_CHANNEL=$ARG_APP_CHANNEL \
     APP_COMMIT=$ARG_APP_COMMIT \
-    APP_UPDATE=$ARG_APP_UPDATE
+    APP_UPDATE=$ARG_APP_UPDATE \
+    APP_BRANCH=${ARG_APP_BRANCH}
 
 # Set environment variables to default values
 # ADMIN_USER : the super user login name
@@ -71,7 +75,7 @@ RUN mkdir -p \
 # Assign working directory
 WORKDIR /opt/shinobi
 
-RUN echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
+RUN echo "deb [check-valid-until=no] http://archive.debian.org/debian jessie-backports main" >> /etc/apt/sources.list
 RUN export DEBIAN_FRONTEND="noninteractive"
 
 # Install package dependencies
@@ -132,23 +136,35 @@ RUN set -ex; \
 
 RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
-# Install ffmpeg static build version from cdn.shinobi.video
-RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
-    tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
-    cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
-    chmod +x /usr/bin/ff* && \
-    rm -f ffmpeg-release-64bit-static.tar.xz && \
-    rm -rf ./ffmpeg-3.3.4-64bit-static
+# # Install ffmpeg static build version from cdn.shinobi.video
+# RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \
+#     tar xpvf ./ffmpeg-release-64bit-static.tar.xz -C ./ && \
+#     cp -f ./ffmpeg-3.3.4-64bit-static/ff* /usr/bin/ && \
+#     chmod +x /usr/bin/ff* && \
+#     rm -f ffmpeg-release-64bit-static.tar.xz && \
+#     rm -rf ./ffmpeg-3.3.4-64bit-static
 
-# Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
-RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
-    npm i npm@latest -g && \
+# # Clone the Shinobi CCTV PRO repo and install Shinobi app including NodeJS dependencies
+# RUN git clone https://gitlab.com/Shinobi-Systems/Shinobi.git /opt/shinobi && \
+#     npm i npm@latest -g && \
+#     npm install pm2 -g && \
+#     npm install
+
+# Install Shinobi app including NodeJS dependencies
+COPY ./ShinobiPro/ ./
+# RUN ls -al
+RUN npm i npm@latest -g && \
     npm install pm2 -g && \
-    npm install
+    npm install jsonfile && \
+    npm install edit-json-file && \
+    npm install ffbinaries && \
+    npm install --unsafe-perm && \
+    npm audit fix --force
 
 # Copy code
 COPY docker-entrypoint.migoller.sh ./docker-entrypoint.sh
 COPY pm2Shinobi.yml ./
+COPY /tools/modifyJson.js ./tools
 RUN chmod -f +x ./*.sh
 
 # Copy default configuration files

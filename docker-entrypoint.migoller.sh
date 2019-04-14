@@ -36,20 +36,24 @@ if [ -n "${ADMIN_PASSWORD}" ]; then
     echo "Hash admin password ..."
     ADMIN_PASSWORD_MD5=$(echo -n "${ADMIN_PASSWORD}" | md5sum | sed -e 's/  -$//')
 fi
+
 echo "MariaDB Directory ..."
-ls /var/lib/mysql
+DB_DATA_PATH="/var/lib/mysql"
+DB_ROOT_PASS="${MYSQL_ROOT_PASSWORD}"
+DB_USER="${MYSQL_USER}"
+DB_PASS="${MYSQL_PASSWORD}"
+MAX_ALLOWED_PACKET="200M"
 
 if [ ! -f /var/lib/mysql/ibdata1 ]; then
     echo "Installing MariaDB ..."
-    mysql_install_db --user=mysql #--silent
+    mysql_install_db --user=mysql --datadir=${DB_DATA_PATH} --silent
 fi
 
 echo "Starting MariaDB ..."
 /usr/bin/mysqld_safe --user=mysql &
-sleep 5s
+sleep 10s
 
 chown -R mysql /var/lib/mysql
-chmod -R 777 /var/lib/mysql
 
 if [ ! -f /var/lib/mysql/ibdata1 ]; then
     mysql -u root --password="" <<-EOSQL
@@ -70,16 +74,17 @@ FLUSH PRIVILEGES ;
 EOSQL
 fi
 
-# Create MySQL database if it does not exists
+# Waiting for connection to MariaDB server
 if [ -n "${MYSQL_HOST}" ]; then
-    echo "Wait for MySQL server" ...
+    echo -n "Waiting for connection to MariaDB server on $MYSQL_HOST ."
     while ! mysqladmin ping -h"$MYSQL_HOST"; do
         sleep 1
+        echo -n "."
     done
+    echo " established."
 fi
 
-echo "Setting up MySQL database if it does not exists ..."
-
+# Create MariaDB database if it does not exists
 echo "Create database schema if it does not exists ..."
 mysql -e "source /opt/shinobi/sql/framework.sql" || true
 

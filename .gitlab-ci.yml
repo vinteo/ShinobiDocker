@@ -3,19 +3,58 @@ image: docker:latest
 services:
   - docker:dind
 
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+stages:
+  - build
+  - test
+  - release
+  - deploy
 
-build-master:
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-test
+  CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+
+before_script:
+#  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  - apk add --update --no-cache bash coreutils gawk git grep nodejs tar xz
+
+build-official:
   stage: build
   script:
-    - apk add --update --no-cache bash
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "official" "git" "" "false" "latest" "" "official"
-#    - docker build --pull -t "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
-#    - docker push "$DH_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "alpine" "git" "" "false" "" "" "alpine"
-    - /bin/bash ./gitlab/buildImageDockerHub.sh "debian" "git" "" "false" "" "" "debian"
-#  except:
-#    - master
+    - /bin/bash ./gitlab-ci/buildImage.sh "master,dev" "official,alpine,debian"
   only:
+    - develop
     - master
+
+build-feature-official:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "official,alpine,debian"
+  only:
+    - feature-offical
+    - /^feature-official.*$/
+
+release-official-develop:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    - develop
+  except:
+    - master
+
+release-feature-official:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "official,alpine,debian"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    - feature-offical
+    - /^feature-official.*$/
