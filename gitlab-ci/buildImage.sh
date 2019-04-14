@@ -22,8 +22,8 @@ else
         echo "  - Setting APP_VERSION to ${APP_VERSION} ..."
 
         for image in "${images[@]}"; do
-            echo "  - Building image: ${CONTAINER_TEST_IMAGE}-${branch}:${image} ..."
-            docker build --pull -f ./${image}/Dockerfile -t $CONTAINER_TEST_IMAGE-${branch}:${image} \
+            echo "  - Building image: ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
+            docker build --pull -f ./${image}/Dockerfile -t $CONTAINER_TEST_IMAGE-${branch}_${image} \
                 --build-arg ARG_APP_VERSION=$APP_VERSION \
                 --build-arg ARG_APP_CHANNEL=$CI_COMMIT_REF_SLUG \
                 --build-arg ARG_APP_COMMIT=$CI_COMMIT_SHA \
@@ -31,11 +31,11 @@ else
                 --build-arg ARG_FLAVOR="${image}" \
                 --build-arg ARG_APP_BRANCH="${branch}" .
 
-            echo "  - Pushing image to GitLab repository: ${CONTAINER_TEST_IMAGE}-${branch}:${image} ..."
+            echo "  - Pushing image to GitLab repository: ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
             if [ "${FAKE_CI}" = "true" ]; then
-                echo "    fake --> docker push ${CONTAINER_TEST_IMAGE}-${branch}:${image} ..."
+                echo "    fake --> docker push ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
             else
-                docker push ${CONTAINER_TEST_IMAGE}-${branch}:${image}
+                docker push ${CONTAINER_TEST_IMAGE}-${branch}_${image}
             fi
         done
     done

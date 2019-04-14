@@ -41,12 +41,12 @@ else
 
             # Set destination image name
             if [ "${branch}" = "master" ]; then
-                export NEW_DEST_IMAGE_NAME="${CONTAINER_TEST_IMAGE}"
+                export NEW_DEST_IMAGE_NAME="${DEST_IMAGE_NAME}"
             else
-                export NEW_DEST_IMAGE_NAME="${CONTAINER_TEST_IMAGE}/${branch}"
+                export NEW_DEST_IMAGE_NAME="${DEST_IMAGE_NAME}/${branch}"
             fi
 
-            echo "  - Releasing ${CONTAINER_TEST_IMAGE}-${branch}:${image} ..."
+            echo "  - Releasing ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
 
             # Set version information
             case "${FORCE_APP_VERSION}" in
@@ -57,7 +57,7 @@ else
                 
                 image)
                     # Get Version information from image
-                    export APP_VERSION=$( docker inspect -f "{{range .Config.Env}}{{println .}}{{end}}" ${CONTAINER_TEST_IMAGE}-${branch}:${image} | grep APP_VERSION | awk '{split($0,a,"="); print a[2]}' )
+                    export APP_VERSION=$( docker inspect -f "{{range .Config.Env}}{{println .}}{{end}}" ${CONTAINER_TEST_IMAGE}-${branch}_${image} | grep APP_VERSION | awk '{split($0,a,"="); print a[2]}' )
                     ;;
                 
                 *)
@@ -81,10 +81,11 @@ else
 
                 echo "    - Image name: ${NEW_DEST_IMAGE_NAME}:[${TAG_LIST}]"
             else
-                echo "    - 1"
-                # ./releaseDockerImage.sh \
-                #     "${CONTAINER_TEST_IMAGE}-${branch}:${image}" "${DEST_IMAGE_NAME}" "${branch}" \
-                #     "$APP_VERSION" "" "false" "" "" "${branch}-${image}"
+                # echo "    - 1"
+                # ./releaseDockerImage.sh "$SOURCE_IMAGE_NAME" "$DEST_IMAGE_NAME" "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO"
+                ./releaseDockerImage.sh \
+                    "${CONTAINER_TEST_IMAGE}-${branch}_${image}" "${NEW_DEST_IMAGE_NAME}" \
+                    "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO""
             fi
         done
     done
