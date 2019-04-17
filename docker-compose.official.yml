@@ -1,7 +1,7 @@
 version: '2'
 services:
   shinobi:
-    image: shinobidocker-dev:alpine
+    image: shinobidocker-dev_alpine
     # build:
       # context: .
       # dockerfile: ./official/Dockerfile

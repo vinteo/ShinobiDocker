@@ -7,3 +7,4 @@ videos
 dbdata
 datadir*
 *-image.sh
+microservice_datadir*

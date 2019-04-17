@@ -1,0 +1,26 @@
+version: '2'
+services:
+  db:
+    image: mariadb
+    env_file:
+      - MySQL.env
+    volumes:
+      - ./microservice_datadir:/var/lib/mysql
+    ports:
+      - "3306:3306"
+  shinobi:
+    image: shinobidocker-dev_microservice-arch
+    # build:
+    #   context: .
+    #   dockerfile: ./microservice-arch/Dockerfile
+    env_file:
+      - MySQL.env
+      - Shinobi.env
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./config:/config
+      - ./videos:/opt/shinobi/videos
+      - /dev/shm/shinobiDockerTemp:/dev/shm/streams
+    ports:
+      - "8080:8080"
