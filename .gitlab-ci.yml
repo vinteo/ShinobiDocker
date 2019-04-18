@@ -20,6 +20,65 @@ before_script:
   - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   - apk add --update --no-cache bash coreutils gawk git grep nodejs tar xz
 
+# ------------------------------------------
+# ----  CI/CD for microservices images  ----
+# ------------------------------------------
+build-microservice:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "master,dev" "microservice-alpine,microservice-debian,microservice-arch"
+  only:
+    - release-microservice
+
+build-feature-microservice:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "microservice-alpine,microservice-debian,microservice-arch"
+  only:
+    - feature-microservice
+    - /^feature-microservice.*$/
+
+release-feature-microservice:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-alpine,microservice-arch"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-alpine,microservice-arch" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+  only:
+    - feature-microservice
+    - /^feature-microservice.*$/
+
+release-feature-microservice-debian:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-debian"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    - feature-microservice
+    - /^feature-microservice.*$/
+
+release-microservice:
+  stage: release
+  script:
+    - echo "----  RELEASE MICROSERVICES IMAGES  ----"
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - echo " Pulling images ..."
+    - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "microservice-alpine,microservice-debian,microservice-arch"
+    - echo " - Logout from GitLab image repository ..."
+    - docker logout $CI_REGISTRY
+    - echo " - Login to Docker Hub ..."
+    - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
+    - echo "Releasing alpine and archlinux images ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-alpine,microservice-arch" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
+    - echo "Releasing debian image ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "latest"  ""
+  only:
+    - release-microservice
+
+# ------------------------------------------
+# ----  CI/CD for official images       ----
+# ------------------------------------------
 build-official:
   stage: build
   script:
@@ -50,9 +109,13 @@ release-feature-official:
 release-official-release:
   stage: release
   script:
+    - echo "----  RELEASE OFFICIAL IMAGES  ----"
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - echo " Pulling images ..."
     - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
+    - echo "Releasing alpine and debian images ..."
     - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+    - echo "Releasing official image ..."
     - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
   only:
     - release-official
@@ -61,15 +124,15 @@ release-master:
   stage: release
   script:
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
-    - echo " - Pulling images ..."
-    - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
-    - echo " - Logout from GitLab image repository ..."
-    - docker logout $CI_REGISTRY
-    - echo " - Login to Docker Hub ..."
-    - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
-    - echo "Releasing alpine and debian images ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
-    - echo "Releasing official image ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$DH_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+    # - echo " - Pulling images ..."
+    # - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
+    # - echo " - Logout from GitLab image repository ..."
+    # - docker logout $CI_REGISTRY
+    # - echo " - Login to Docker Hub ..."
+    # - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
+    # - echo "Releasing alpine and debian images ..."
+    # - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
+    # - echo "Releasing official image ..."
+    # - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$DH_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
   only:
     - master
