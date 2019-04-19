@@ -23,30 +23,84 @@ before_script:
 # ------------------------------------------
 # ----  CI/CD for microservices images  ----
 # ------------------------------------------
-build-microservice:
+build-feature-microservice-alpine:
   stage: build
   script:
-    - /bin/bash ./gitlab-ci/buildImage.sh "master,dev" "microservice-alpine,microservice-debian,microservice-arch"
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "microservice-alpine"
   only:
-    - release-microservice
+    refs:
+      - feature-microservice
+      - /^feature-microservice.*$/
+    changes:
+      - docker-entrypoint.microservice.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - microservice-alpine/*
 
-build-feature-microservice:
+build-feature-microservice-arch:
   stage: build
   script:
-    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "microservice-alpine,microservice-debian,microservice-arch"
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "microservice-arch"
   only:
-    - feature-microservice
-    - /^feature-microservice.*$/
+    refs:
+      - feature-microservice
+      - /^feature-microservice.*$/
+    changes:
+      - docker-entrypoint.microservice.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - microservice-arch/*
 
-release-feature-microservice:
+build-feature-microservice-debian:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "microservice-debian"
+  only:
+    refs:
+      - feature-microservice
+      - /^feature-microservice.*$/
+    changes:
+      - docker-entrypoint.microservice.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - microservice-debian/*
+
+release-feature-microservice-alpine:
   stage: release
   script:
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
-    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-alpine,microservice-arch"
-    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-alpine,microservice-arch" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-alpine"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-alpine" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
   only:
-    - feature-microservice
-    - /^feature-microservice.*$/
+    refs:
+      - feature-microservice
+      - /^feature-microservice.*$/
+    changes:
+      - docker-entrypoint.microservice.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - microservice-alpine/*
+
+release-feature-microservice-arch:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-arch"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-arch" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    refs:
+      - feature-microservice
+      - /^feature-microservice.*$/
+    changes:
+      - docker-entrypoint.microservice.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - microservice-arch/*
 
 release-feature-microservice-debian:
   stage: release
@@ -55,8 +109,25 @@ release-feature-microservice-debian:
     - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-debian"
     - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
   only:
-    - feature-microservice
-    - /^feature-microservice.*$/
+    refs:
+      - feature-microservice
+      - /^feature-microservice.*$/
+    changes:
+      - docker-entrypoint.microservice.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - microservice-debian/*
+
+build-microservice:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "master,dev" "microservice-alpine,microservice-arch,microservice-debian"
+  only:
+    refs:
+      - release-microservice
+      - schedules
+      - triggers
 
 release-microservice:
   stage: release
@@ -69,12 +140,15 @@ release-microservice:
     - docker logout $CI_REGISTRY
     - echo " - Login to Docker Hub ..."
     - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
-    - echo "Releasing alpine and archlinux images ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-alpine,microservice-arch" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
-    - echo "Releasing debian image ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "latest"  ""
+    - echo "Releasing debian and archlinux images ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-debian,microservice-arch" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
+    - echo "Releasing alpine image ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-alpine" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "microservice"  ""
   only:
-    - release-microservice
+    refs:
+      - release-microservice
+      - schedules
+      - triggers
 
 # ------------------------------------------
 # ----  CI/CD for official images       ----
