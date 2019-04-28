@@ -37,6 +37,7 @@ build-feature-microservice-alpine:
       - sql/*
       - tools/*
       - microservice-alpine/*
+      - .gitlab-ci.yml
 
 build-feature-microservice-arch:
   stage: build
@@ -52,6 +53,7 @@ build-feature-microservice-arch:
       - sql/*
       - tools/*
       - microservice-arch/*
+      - .gitlab-ci.yml
 
 build-feature-microservice-debian:
   stage: build
@@ -67,13 +69,14 @@ build-feature-microservice-debian:
       - sql/*
       - tools/*
       - microservice-debian/*
+      - .gitlab-ci.yml
 
 release-feature-microservice-alpine:
   stage: release
   script:
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
     - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-alpine"
-    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-alpine" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-alpine" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "microservice"  ""
   only:
     refs:
       - feature-microservice
@@ -84,13 +87,14 @@ release-feature-microservice-alpine:
       - sql/*
       - tools/*
       - microservice-alpine/*
+      - .gitlab-ci.yml
 
 release-feature-microservice-arch:
   stage: release
   script:
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
     - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-arch"
-    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-arch" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-arch" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
   only:
     refs:
       - feature-microservice
@@ -101,13 +105,14 @@ release-feature-microservice-arch:
       - sql/*
       - tools/*
       - microservice-arch/*
+      - .gitlab-ci.yml
 
 release-feature-microservice-debian:
   stage: release
   script:
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
     - /bin/bash ./gitlab-ci/pullImage.sh "dev" "microservice-debian"
-    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
   only:
     refs:
       - feature-microservice
@@ -118,6 +123,7 @@ release-feature-microservice-debian:
       - sql/*
       - tools/*
       - microservice-debian/*
+      - .gitlab-ci.yml
 
 build-microservice:
   stage: build
