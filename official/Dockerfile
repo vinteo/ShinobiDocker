@@ -76,7 +76,8 @@ RUN apk update && \
         tar \
         xz
 
-RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/my.cnf.d/mariadb-server.cnf && \
+    sed -ie "s/^skip-networking$/#skip-networking/" /etc/my.cnf.d/mariadb-server.cnf
 
 # Install ffmpeg static build version from cdn.shinobi.video
 RUN wget https://cdn.shinobi.video/installers/ffmpeg-release-64bit-static.tar.xz && \

@@ -159,60 +159,135 @@ release-microservice:
 # ------------------------------------------
 # ----  CI/CD for official images       ----
 # ------------------------------------------
+build-feature-official-alpine:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "alpine"
+  only:
+    refs:
+      - feature-offical
+      - /^feature-official.*$/
+    changes:
+      - docker-entrypoint.migoller.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - alpine/*
+      - .gitlab-ci.yml
+
+build-feature-official-debian:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "debian"
+  only:
+    refs:
+      - feature-offical
+      - /^feature-official.*$/
+    changes:
+      - docker-entrypoint.migoller.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - debian/*
+      - .gitlab-ci.yml
+
+build-feature-official-official:
+  stage: build
+  script:
+    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "official"
+  only:
+    refs:
+      - feature-offical
+      - /^feature-official.*$/
+    changes:
+      - docker-entrypoint.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - official/*
+      - .gitlab-ci.yml
+
+release-feature-official-alpine:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "alpine"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "alpine" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+  only:
+    refs:
+      - feature-offical
+      - /^feature-official.*$/
+    changes:
+      - docker-entrypoint.migoller.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - alpine/*
+      - .gitlab-ci.yml
+
+release-feature-official-debian:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "debian"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+  only:
+    refs:
+      - feature-offical
+      - /^feature-official.*$/
+    changes:
+      - docker-entrypoint.migoller.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - debian/*
+      - .gitlab-ci.yml
+
+release-feature-official-official:
+  stage: release
+  script:
+    - /bin/bash ./gitlab-ci/preReleaseHook.sh
+    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "official"
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+  only:
+    refs:
+      - feature-offical
+      - /^feature-official.*$/
+    changes:
+      - docker-entrypoint.sh
+      - pm2Shinobi.yml
+      - sql/*
+      - tools/*
+      - official/*
+      - .gitlab-ci.yml
+
 build-official:
   stage: build
   script:
     - /bin/bash ./gitlab-ci/buildImage.sh "master,dev" "official,alpine,debian"
   only:
-    - release-official
-    - master
+    refs:
+      - release-official
+      - schedules
+      - triggers
 
-build-feature-official:
-  stage: build
-  script:
-    - /bin/bash ./gitlab-ci/buildImage.sh "dev" "official,alpine,debian"
-  only:
-    - feature-offical
-    - /^feature-official.*$/
-
-release-feature-official:
-  stage: release
-  script:
-    - /bin/bash ./gitlab-ci/preReleaseHook.sh
-    - /bin/bash ./gitlab-ci/pullImage.sh "dev" "official,alpine,debian"
-    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
-    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
-  only:
-    - feature-offical
-    - /^feature-official.*$/
-
-release-official-release:
+release-official:
   stage: release
   script:
     - echo "----  RELEASE OFFICIAL IMAGES  ----"
     - /bin/bash ./gitlab-ci/preReleaseHook.sh
     - echo " Pulling images ..."
     - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
+    - echo " - Logout from GitLab image repository ..."
+    - docker logout $CI_REGISTRY
+    - echo " - Login to Docker Hub ..."
+    - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
     - echo "Releasing alpine and debian images ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$CI_REGISTRY_IMAGE" "" "-" "" "false" ""  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" image "" "false" ""  ""
     - echo "Releasing official image ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$CI_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$DH_REGISTRY_IMAGE" "" image "" "false" "latest"  ""
   only:
-    - release-official
-
-release-master:
-  stage: release
-  script:
-    - /bin/bash ./gitlab-ci/preReleaseHook.sh
-    # - echo " - Pulling images ..."
-    # - /bin/bash ./gitlab-ci/pullImage.sh "master,dev" "official,alpine,debian"
-    # - echo " - Logout from GitLab image repository ..."
-    # - docker logout $CI_REGISTRY
-    # - echo " - Login to Docker Hub ..."
-    # - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
-    # - echo "Releasing alpine and debian images ..."
-    # - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
-    # - echo "Releasing official image ..."
-    # - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$DH_REGISTRY_IMAGE" "" "-" "" "false" "latest"  ""
-  only:
-    - master
+    refs:
+      - release-microservice
+      - schedules
+      - triggers
