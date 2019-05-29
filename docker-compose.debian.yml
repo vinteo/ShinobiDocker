@@ -1,7 +1,7 @@
 version: '2'
 services:
   shinobi:
-    image: shinobidocker-dev:debian
+    image: shinobidocker-dev_debian
     # build:
       # context: .
       # dockerfile: ./debian/Dockerfile

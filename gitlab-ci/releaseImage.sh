@@ -30,7 +30,7 @@ else
     APP_SPECIAL_VERSIONS=${6}
     APP_ISDEFAULT=${7}
     APP_SPECIAL_TAGS=${8}
-    APP_SUFFIX=${9}
+    MAIN_APP_SUFFIX=${9}
     APP_DISTRO=${10}
 
     for branch in "${branches[@]}"; do
@@ -38,14 +38,6 @@ else
         echo "Releasing image(s) for branch ${branch}:"
         for image in "${images[@]}"; do
             # Releasing image ...
-
-            # Set destination image name
-            if [ "${branch}" = "master" ]; then
-                export NEW_DEST_IMAGE_NAME="${DEST_IMAGE_NAME}"
-            else
-                export NEW_DEST_IMAGE_NAME="${DEST_IMAGE_NAME}/${branch}"
-            fi
-
             echo "  - Releasing ${CONTAINER_TEST_IMAGE}-${branch}_${image} ..."
 
             # Set version information
@@ -71,15 +63,25 @@ else
             export APP_FLAVOR="${image}"
             export APP_DISTRO="${image}"
 
+            if [ "${branch}" = "master" ]; then
+                export APP_SUFFIX="${MAIN_APP_SUFFIX}"
+            else
+                if [ -n "${MAIN_APP_SUFFIX}" ]; then
+                    export APP_SUFFIX="${MAIN_APP_SUFFIX}-${branch}"
+                else
+                    export APP_SUFFIX="-${branch}"
+                fi
+            fi
+
             # Tag and push the image
             if [ "${FAKE_CI}" = "true" ]; then
                 $( ./createTagList.sh "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO" )
-                echo "    - Image name: ${NEW_DEST_IMAGE_NAME}:[${TAG_LIST}]"
+                echo "    - Image name: ${DEST_IMAGE_NAME}:[${TAG_LIST}]"
             else
                 # echo "    - 1"
                 # ./releaseDockerImage.sh "$SOURCE_IMAGE_NAME" "$DEST_IMAGE_NAME" "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO"
                 ./releaseDockerImage.sh \
-                    "${CONTAINER_TEST_IMAGE}-${branch}_${image}" "${NEW_DEST_IMAGE_NAME}" \
+                    "${CONTAINER_TEST_IMAGE}-${branch}_${image}" "${DEST_IMAGE_NAME}" \
                     "$APP_FLAVOR" "$APP_VERSION" "$APP_SPECIAL_VERSIONS" "$APP_ISDEFAULT" "$APP_SPECIAL_TAGS" "$APP_SUFFIX" "$APP_DISTRO"
             fi
         done
