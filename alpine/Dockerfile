@@ -118,7 +118,8 @@ RUN apk update && \
         tar \
         xz
 
-RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+RUN sed -ie "s/^bind-address\s*=\s*127\.0\.0\.1$/#bind-address = 0.0.0.0/" /etc/my.cnf.d/mariadb-server.cnf && \
+    sed -ie "s/^skip-networking$/#skip-networking/" /etc/my.cnf.d/mariadb-server.cnf
 
 # Install Shinobi app including NodeJS dependencies
 COPY ./ShinobiPro/ ./
