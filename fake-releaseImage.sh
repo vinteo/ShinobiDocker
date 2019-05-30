@@ -23,7 +23,7 @@ echo "----  DEV-images  ----"
 echo "----  MASTER-images  ----"
 # alpine and debian images
 /bin/bash ./gitlab-ci/releaseImage.sh \
-    "dev" "alpine,debian" "testimagename" \
+    "master,dev" "alpine,debian" "testimagename" \
     "" "image" "" "false" ""  ""
 
 # Offical image with tags "latest" and "official"
