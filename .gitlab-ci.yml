@@ -283,11 +283,12 @@ release-official:
     - echo " - Login to Docker Hub ..."
     - docker login -u "$DH_REGISTRY_USER" -p "$DH_REGISTRY_PASSWORD" $DH_REGISTRY
     - echo "Releasing alpine and debian images ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" image "" "false" ""  ""
-    - echo "Releasing official image ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "official" "$DH_REGISTRY_IMAGE" "" image "" "false" "latest"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "alpine,debian" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "" ""
+    - echo "Releasing official images ..."
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master" "official" "$DH_REGISTRY_IMAGE" "" "-" "" "false" "latest" ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "official" "$DH_REGISTRY_IMAGE" "" "-" "" "false" "latest-dev" ""
   only:
     refs:
-      - release-microservice
+      - release-official
       - schedules
       - triggers
