@@ -189,7 +189,11 @@ if [ -n "${ADMIN_USER}" ]; then
 
         # Set Shinobi's superuser's credentials
         echo "  - Set credentials ..."
-        node /opt/shinobi/tools/modifyJson.js "/opt/shinobi/super.json" mail="${ADMIN_USER}" pass="${ADMIN_PASSWORD_HASH}"
+        #   ISSUE-10: Bugfix
+        # node /opt/shinobi/tools/modifyJson.js "/opt/shinobi/super.json" mail="${ADMIN_USER}" pass="${ADMIN_PASSWORD_HASH}"
+        sed -i -e 's/"mail":"admin@shinobi.video"/"mail":"'"${ADMIN_USER}"'"/g' \
+            -e "s/21232f297a57a5a743894a0e4a801fc3/${ADMIN_PASSWORD_HASH}/g" \
+            "/opt/shinobi/super.json"
     fi
 fi
 
