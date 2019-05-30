@@ -149,7 +149,8 @@ release-microservice:
     - echo "Releasing debian and archlinux images ..."
     - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-debian,microservice-arch" "$DH_REGISTRY_IMAGE" "" "image" "" "false" ""  ""
     - echo "Releasing alpine image ..."
-    - /bin/bash ./gitlab-ci/releaseImage.sh "master,dev" "microservice-alpine" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "microservice"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "master" "microservice-alpine" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "microservice"  ""
+    - /bin/bash ./gitlab-ci/releaseImage.sh "dev" "microservice-alpine" "$DH_REGISTRY_IMAGE" "" "image" "" "false" "microservice-dev"  ""
   only:
     refs:
       - release-microservice
